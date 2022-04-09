@@ -176,23 +176,22 @@ func NewRequestFromBytes(tokenService *ManagementService, anchor string, actions
 	}, nil
 }
 
-// ID returns the anchor of the request
-func (t *Request) ID() string {
-	return t.Anchor
-}
-
 // Issue appends an issue action to the request. The action will be prepared using the provided issuer wallet.
 // The action issues to the receiver a token of the passed type and quantity.
 // Additional options can be passed to customize the action.
 func (t *Request) Issue(wallet *IssuerWallet, receiver view.Identity, typ string, q uint64, opts ...IssueOption) (*IssueAction, error) {
-	if typ == "" {
+	// validate inputs
+	if wallet == nil {
+		return nil, errors.Errorf("wallet is nil")
+	}
+	if receiver.IsNone() {
+		return nil, errors.Errorf("receiver is nil")
+	}
+	if len(typ) == 0 {
 		return nil, errors.Errorf("type is empty")
 	}
 	if q == 0 {
-		return nil, errors.Errorf("q is zero")
-	}
-	if receiver.IsNone() {
-		return nil, errors.Errorf("all recipients should be defined")
+		return nil, errors.Errorf("quantity is 0")
 	}
 
 	id, err := wallet.GetIssuerIdentity(typ)
@@ -254,11 +253,33 @@ func (t *Request) Issue(wallet *IssuerWallet, receiver view.Identity, typ string
 // In other words, owners[0] will receives values[0], and so on.
 // Additional options can be passed to customize the action.
 func (t *Request) Transfer(wallet *OwnerWallet, typ string, values []uint64, owners []view.Identity, opts ...TransferOption) (*TransferAction, error) {
+	// validate inputs
+	if wallet == nil {
+		return nil, errors.Errorf("wallet is nil")
+	}
+	if len(typ) == 0 {
+		return nil, errors.Errorf("type is empty")
+	}
+	if len(values) == 0 {
+		return nil, errors.Errorf("values is empty")
+	}
+	if len(owners) == 0 {
+		return nil, errors.Errorf("owners is empty")
+	}
+	if len(values) != len(owners) {
+		return nil, errors.Errorf("values and owners must have the same length")
+	}
 	for _, v := range values {
 		if v == 0 {
-			return nil, errors.Errorf("value is zero")
+			return nil, errors.Errorf("values must be non-zero")
 		}
 	}
+	for _, owner := range owners {
+		if owner.IsNone() {
+			return nil, errors.Errorf("all recipients should be defined")
+		}
+	}
+
 	opt, err := compileTransferOptions(opts...)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "failed compiling options [%v]", opts)
@@ -306,12 +327,23 @@ func (t *Request) Transfer(wallet *OwnerWallet, typ string, values []uint64, own
 // Redeem appends a redeem action to the request. The action will be prepared using the provided owner wallet.
 // The action redeems tokens of the passed type for a total amount matching the passed value.
 // Additional options can be passed to customize the action.
-func (t *Request) Redeem(wallet *OwnerWallet, typ string, value uint64, opts ...TransferOption) error {
+func (t *Request) Redeem(wallet *OwnerWallet, typ string, q uint64, opts ...TransferOption) error {
+	// validate inputs
+	if wallet == nil {
+		return errors.Errorf("wallet is nil")
+	}
+	if len(typ) == 0 {
+		return errors.Errorf("type is empty")
+	}
+	if q == 0 {
+		return errors.Errorf("quantity is 0")
+	}
+
 	opt, err := compileTransferOptions(opts...)
 	if err != nil {
 		return errors.WithMessagef(err, "failed compiling options [%v]", opts)
 	}
-	tokenIDs, outputTokens, err := t.prepareTransfer(true, wallet, typ, []uint64{value}, []view.Identity{nil}, opt)
+	tokenIDs, outputTokens, err := t.prepareTransfer(true, wallet, typ, []uint64{q}, []view.Identity{nil}, opt)
 	if err != nil {
 		return errors.Wrap(err, "failed preparing transfer")
 	}
@@ -334,9 +366,11 @@ func (t *Request) Redeem(wallet *OwnerWallet, typ string, value uint64, opts ...
 		return errors.Wrap(err, "failed creating transfer action")
 	}
 
-	// double check
-	if err := ts.VerifyTransfer(transfer, transferMetadata.TokenInfo); err != nil {
-		return errors.Wrap(err, "failed checking generated proof")
+	if logger.IsEnabledFor(zapcore.DebugLevel) {
+		// double check
+		if err := ts.VerifyTransfer(transfer, transferMetadata.TokenInfo); err != nil {
+			return errors.Wrap(err, "failed checking generated proof")
+		}
 	}
 
 	// Append
@@ -359,6 +393,11 @@ func (t *Request) Outputs() (*OutputStream, error) {
 			return nil, errors.Wrapf(err, "failed deserializing issue action [%d]", i)
 		}
 		for j, output := range action.GetOutputs() {
+			// no token info, then skip
+			if len(t.Metadata.Issues[i].TokenInfo[j]) == 0 {
+				continue
+			}
+
 			raw, err := output.Serialize()
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed deserializing issue action output [%d,%d]", i, j)
@@ -387,6 +426,11 @@ func (t *Request) Outputs() (*OutputStream, error) {
 			return nil, errors.Wrapf(err, "failed deserializing transfer action [%d]", i)
 		}
 		for j, output := range action.GetOutputs() {
+			// no token info, then skip
+			if len(t.Metadata.Transfers[i].TokenInfo[j]) == 0 {
+				continue
+			}
+
 			raw, err := output.Serialize()
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed deserializing transfer action output [%d,%d]", i, j)
@@ -440,7 +484,10 @@ func (t *Request) Inputs() (*InputStream, error) {
 	return NewInputStream(t.TokenService.Vault().NewQueryEngine(), inputs), nil
 }
 
+// Verify verifies the request.
+// TODO: complete this method
 func (t *Request) Verify() error {
+	// Verify the actions
 	ts := t.TokenService.tms
 	for i, issue := range t.Actions.Issues {
 		action, err := ts.DeserializeIssueAction(issue)
@@ -461,19 +508,7 @@ func (t *Request) Verify() error {
 		}
 	}
 
-	if _, err := t.Inputs(); err != nil {
-		return errors.WithMessagef(err, "failed verifying inputs")
-	}
-
-	if _, err := t.Outputs(); err != nil {
-		return errors.WithMessagef(err, "failed verifying outputs")
-	}
-
-	return nil
-}
-
-func (t *Request) IsValid() error {
-	// TODO: IsValid tokens
+	// verify inputs and outputs
 	numTokens, err := t.countOutputs()
 	if err != nil {
 		return errors.Wrapf(err, "failed extracting tokens")
@@ -482,8 +517,14 @@ func (t *Request) IsValid() error {
 	if numTokens != len(tis) {
 		return errors.Errorf("invalid transaction, the number of tokens differs from the number of token info [%d],[%d]", numTokens, len(tis))
 	}
+	if _, err := t.Inputs(); err != nil {
+		return errors.WithMessagef(err, "failed verifying inputs")
+	}
+	if _, err := t.Outputs(); err != nil {
+		return errors.WithMessagef(err, "failed verifying outputs")
+	}
 
-	return t.Verify()
+	return nil
 }
 
 // MarshallToAudit marshalls the request to a message suitable for audit signature.
@@ -505,8 +546,8 @@ func (t *Request) MarshallToSign() ([]byte, error) {
 	return req.Bytes()
 }
 
-// RequestToBytes marshalls the request's actions to bytes.
-func (t *Request) RequestToBytes() ([]byte, error) {
+// ActionsToBytes marshalls the request's actions to bytes.
+func (t *Request) ActionsToBytes() ([]byte, error) {
 	return t.Actions.Bytes()
 }
 
@@ -518,7 +559,7 @@ func (t *Request) MetadataToBytes() ([]byte, error) {
 // Bytes marshalls the request to bytes.
 // It includes: Anchor (or ID), actions, and metadata.
 func (t *Request) Bytes() ([]byte, error) {
-	req, err := t.RequestToBytes()
+	req, err := t.ActionsToBytes()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed marshalling request to bytes")
 	}
@@ -632,8 +673,11 @@ func (t *Request) Transfers() []*Transfer {
 }
 
 // Import imports the actions and metadata from the passed request.
-// TODO: check that the anchor is the same.
 func (t *Request) Import(request *Request) error {
+	if t.Anchor != request.Anchor {
+		return errors.Errorf("cannot import request with different anchor")
+	}
+
 	for _, issue := range request.Actions.Issues {
 		t.Actions.Issues = append(t.Actions.Issues, issue)
 	}
@@ -770,7 +814,6 @@ func (t *Request) parseInputIDs(inputs []*token.ID) ([]*token.ID, token.Quantity
 }
 
 func (t *Request) prepareTransfer(redeem bool, wallet *OwnerWallet, typ string, values []uint64, owners []view.Identity, transferOpts *TransferOptions) ([]*token.ID, []*token.Token, error) {
-
 	for _, owner := range owners {
 		if redeem {
 			if !owner.IsNone() {

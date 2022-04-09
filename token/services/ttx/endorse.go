@@ -338,7 +338,7 @@ func (c *collectEndorsementsView) requestApproval(context view.Context) (*networ
 	agent.EmitKey(0, "ttx", "start", "requestApproval", c.tx.ID())
 	defer agent.EmitKey(0, "ttx", "end", "requestApproval", c.tx.ID())
 
-	requestRaw, err := c.tx.TokenRequest.RequestToBytes()
+	requestRaw, err := c.tx.TokenRequest.ActionsToBytes()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed marshalling request")
 	}

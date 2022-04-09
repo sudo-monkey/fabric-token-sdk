@@ -117,8 +117,8 @@ func NewTransactionFromBytes(sp view.Context, nw string, channel string, raw []b
 			token.WithNamespace(tx.Namespace()),
 		),
 	)
-	if tx.ID() != tx.TokenRequest.ID() {
-		return nil, errors.Errorf("invalid transaction, transaction ids do not match [%s][%s]", tx.ID(), tx.TokenRequest.ID())
+	if tx.ID() != tx.TokenRequest.Anchor {
+		return nil, errors.Errorf("invalid transaction, transaction ids do not match [%s][%s]", tx.ID(), tx.TokenRequest.Anchor)
 	}
 
 	// if tx.Envelope != nil {
@@ -206,10 +206,6 @@ func (t *Transaction) Inputs() (*token.InputStream, error) {
 // This means checking that the embedded TokenRequest is valid.
 func (t *Transaction) Verify() error {
 	return t.TokenRequest.Verify()
-}
-
-func (t *Transaction) IsValid() error {
-	return t.TokenRequest.IsValid()
 }
 
 func (t *Transaction) MarshallToAudit() ([]byte, error) {

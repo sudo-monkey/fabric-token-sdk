@@ -10,6 +10,7 @@ import (
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/view"
 	api2 "github.com/hyperledger-labs/fabric-token-sdk/token/driver"
 	token2 "github.com/hyperledger-labs/fabric-token-sdk/token/token"
+	"github.com/pkg/errors"
 )
 
 // ListTokensOptions options for listing tokens
@@ -265,7 +266,7 @@ func (o *OwnerWallet) GetTokenMetadata(token []byte) ([]byte, error) {
 func (o *OwnerWallet) ListUnspentTokens(opts ...ListTokensOption) (*token2.UnspentTokens, error) {
 	compiledOpts, err := compileListTokensOption(opts...)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessagef(err, "failed to compile list tokens options")
 	}
 	return o.w.ListTokens(compiledOpts)
 }
@@ -306,7 +307,7 @@ func (i *IssuerWallet) GetSigner(identity view.Identity) (Signer, error) {
 func (i *IssuerWallet) ListIssuedTokens(opts ...ListTokensOption) (*token2.IssuedTokens, error) {
 	compiledOpts, err := compileListTokensOption(opts...)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessagef(err, "failed to compile list tokens options")
 	}
 	return i.w.HistoryTokens(compiledOpts)
 }

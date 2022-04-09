@@ -249,8 +249,14 @@ func (t *ManagementService) ConfigManager() *ConfigManager {
 // GetManagementService returns the management service for the passed options. If no options are passed,
 // the default management service is returned.
 // Options: WithNetwork, WithChannel, WithNamespace, WithPublicParameterFetcher, WithTMS, WithTMSID
+// In case of an error, a panic is raised.
 func GetManagementService(sp ServiceProvider, opts ...ServiceOption) *ManagementService {
-	return GetManagementServiceProvider(sp).GetManagementService(opts...)
+	ms, err := GetManagementServiceProvider(sp).GetManagementService(opts...)
+	if err != nil {
+		logger.Errorf("Error getting management service: %s", err)
+		panic(err)
+	}
+	return ms
 }
 
 // NewServicesFromPublicParams uses the passed marshalled public parameters to create an instance

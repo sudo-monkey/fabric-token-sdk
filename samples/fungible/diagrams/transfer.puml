@@ -1,0 +1,55 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+actor "Alice" as Alice
+actor "Bob" as Bob
+actor "Auditor" as Auditor
+participant "Endorsers" as Endorsers
+participant "Fabric" as Fabric
+
+group Request Recipient Identity
+Alice -> Bob: Send a Recipient Request
+Bob -> Bob: Fetch a Recipient Identity\n from a Wallet
+Bob -> Alice: Bob's Recipient Identity
+end
+
+group Prepare Token Transaction
+Alice -> Alice: Add a Transfer of 10 USD to Bob
+end
+
+group Collect Endorsements
+    group Collect Signatures
+    Alice -> Alice: Sign Token Transaction
+    end
+    group Auditing
+    Alice -> Auditor: Send Token Transaction for Auditing
+    Auditor -> Auditor: Inspect Transaction.\nIf valid, sign it.
+    Auditor -> Alice: Send signed Transaction
+    end
+    group Request Fabric Endorsements
+    Alice -> Endorsers: Request Endorsements
+    Endorsers -> Endorsers: Execute Token Chaincode
+    Endorsers -> Alice: Send Endorsements
+    end
+    Alice -> Alice: Assemble Fabric Transaction from the endorsements.\n Attach it to the Token Transaction.
+    group Distribute Token Transaction
+    Alice -> Bob: Distribute Transaction
+    Bob -> Bob: Store Token Transaction locally
+    Bob -> Alice: Ack
+    end
+end
+
+group Ordering
+Alice -> Fabric: Send Fabric Transaction to the Ordering Service
+Alice -> Alice: Wait for Fabric Transaction to be ordered.
+Alice -> Alice: Update Vault to reflect the fact that certain\n tokens have been transferred.
+end
+
+group Finality
+Bob -> Bob: Wait for Fabric Transaction to be ordered.
+Bob -> Bob: Update Vault to reflect the fact that certain\n tokens have been received.
+end
+
+@enduml
