@@ -166,7 +166,6 @@ func (d *DLogCustomCryptoMaterialGenerator) Setup(tms *topology.TMS) (string, er
 	}
 	Eventually(sess, d.EventuallyTimeout).Should(gexec.Exit(0))
 	return output, nil
-	// return d.tokenPlatform.GetContext().PlatformByName(tms.Network).(fabricPlatform).DefaultIdemixOrgMSPDir(), nil
 }
 
 func (d *DLogCustomCryptoMaterialGenerator) GenerateCertifierIdentities(tms *topology.TMS, node *node.Node, certifiers ...string) []generators.Identity {

@@ -17,19 +17,17 @@ import (
 	"time"
 
 	math3 "github.com/IBM/mathlib"
-	"github.com/hyperledger-labs/fabric-smart-client/integration/nwo/fabric"
-
 	api2 "github.com/hyperledger-labs/fabric-smart-client/integration/nwo/api"
 	"github.com/hyperledger-labs/fabric-smart-client/integration/nwo/common"
+	"github.com/hyperledger-labs/fabric-smart-client/integration/nwo/fabric"
 	"github.com/hyperledger-labs/fabric-smart-client/integration/nwo/fabric/topology"
 	"github.com/hyperledger-labs/fabric-smart-client/integration/nwo/fsc"
 	sfcnode "github.com/hyperledger-labs/fabric-smart-client/integration/nwo/fsc/node"
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/services/flogging"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gexec"
-
 	"github.com/hyperledger-labs/fabric-token-sdk/integration/nwo/token/generators"
 	topology2 "github.com/hyperledger-labs/fabric-token-sdk/integration/nwo/token/topology"
+	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gexec"
 )
 
 var logger = flogging.MustGetLogger("integration.token.fabric")
@@ -170,6 +168,7 @@ func (p *NetworkHandler) PostRun(load bool, tms *topology2.TMS) {
 	if !load {
 		p.setupTokenChaincodes(tms)
 	}
+	p.startFabricCA(tms)
 }
 
 func (p *NetworkHandler) SetCryptoMaterialGenerator(driver string, generator generators.CryptoMaterialGenerator) {
@@ -291,4 +290,7 @@ func (p *NetworkHandler) GetEntry(tms *topology2.TMS) *Entry {
 		p.Entries[tms.Network+tms.Channel+tms.Namespace] = entry
 	}
 	return entry
+}
+
+func (p *NetworkHandler) startFabricCA(tms *topology2.TMS) {
 }
