@@ -13,12 +13,13 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
+
 	"github.com/hyperledger-labs/fabric-smart-client/platform/fabric"
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/view"
 	"github.com/hyperledger-labs/fabric-token-sdk/token"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/interop/encoding"
 	fabric2 "github.com/hyperledger-labs/fabric-token-sdk/token/services/network/fabric"
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -60,7 +61,7 @@ func ScanForPreImage(ctx view.Context, image []byte, hashFunc crypto.Hash, hashE
 		}
 
 		ns := tms.Namespace()
-		w := translator.New(tx.TxID(), fabric2.NewRWSWrapper(rws), tms.Namespace())
+		w := utxo.NewTranslator(tx.TxID(), fabric2.NewRWSWrapper(rws), tms.Namespace())
 		for i := 0; i < rws.NumWrites(ns); i++ {
 			k, v, err := rws.GetWriteAt(ns, i)
 			if err != nil {

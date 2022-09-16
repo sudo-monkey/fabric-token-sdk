@@ -14,6 +14,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
+
 	"github.com/hyperledger-labs/fabric-token-sdk/integration/nwo/token/generators/dlog"
 	"github.com/hyperledger-labs/fabric-token-sdk/integration/nwo/token/generators/fabtoken"
 
@@ -26,7 +28,6 @@ import (
 	"github.com/hyperledger-labs/fabric-token-sdk/integration/nwo/token/generators"
 	topology2 "github.com/hyperledger-labs/fabric-token-sdk/integration/nwo/token/topology"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/network/fabric/tcc"
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator"
 	"github.com/hyperledger-labs/orion-sdk-go/pkg/bcdb"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -158,7 +159,7 @@ func (p *NetworkHandler) PostRun(load bool, tms *topology2.TMS) {
 		me: custodianID,
 		tx: tx,
 	}
-	w := translator.New("", rwset, "")
+	w := utxo.NewTranslator("", rwset, "")
 	ppRaw, err := os.ReadFile(p.TokenPlatform.PublicParametersFile(tms))
 	Expect(err).ToNot(HaveOccurred(), "Failed to read public parameters file %s", p.TokenPlatform.PublicParametersFile(tms))
 	action := &tcc.SetupAction{

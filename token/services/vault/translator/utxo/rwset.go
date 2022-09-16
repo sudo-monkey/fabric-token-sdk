@@ -4,7 +4,7 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package translator
+package utxo
 
 import "github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/driver"
 

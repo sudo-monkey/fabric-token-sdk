@@ -19,7 +19,7 @@ import (
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/services/tracing"
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/services/tracker/metrics"
 	"github.com/hyperledger-labs/fabric-token-sdk/token"
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
 	token2 "github.com/hyperledger-labs/fabric-token-sdk/token/token"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
@@ -83,7 +83,7 @@ func (cc *TokenChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 		return shim.Error(fmt.Sprintf("failed to get public parameters: %s", err))
 	}
 
-	w := translator.New("", &rwsWrapper{stub: stub}, "")
+	w := utxo.NewTranslator("", &rwsWrapper{stub: stub}, "")
 	if err := w.Write(&SetupAction{SetupParameters: ppRaw}); err != nil {
 		return shim.Error(err.Error())
 	}
@@ -232,7 +232,7 @@ func (cc *TokenChaincode) ProcessRequest(raw []byte, stub shim.ChaincodeStubInte
 	// Write
 	cc.MetricsAgent.EmitKey(0, "tcc", "start", "TokenChaincodeProcessRequestWrite", stub.GetTxID())
 
-	w := translator.New(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
+	w := utxo.NewTranslator(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
 	for _, action := range actions {
 		err = w.Write(action)
 		if err != nil {
@@ -249,7 +249,7 @@ func (cc *TokenChaincode) ProcessRequest(raw []byte, stub shim.ChaincodeStubInte
 }
 
 func (cc *TokenChaincode) QueryPublicParams(stub shim.ChaincodeStubInterface) pb.Response {
-	w := translator.New(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
+	w := utxo.NewTranslator(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
 	raw, err := w.ReadSetupParameters()
 	if err != nil {
 		shim.Error("failed to retrieve public parameters: " + err.Error())
@@ -269,7 +269,7 @@ func (cc *TokenChaincode) QueryTokens(idsRaw []byte, stub shim.ChaincodeStubInte
 
 	logger.Debugf("query tokens [%v]...", ids)
 
-	w := translator.New(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
+	w := utxo.NewTranslator(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
 	res, err := w.QueryTokens(ids)
 	if err != nil {
 		logger.Errorf("failed query tokens [%v]: [%s]", ids, err)

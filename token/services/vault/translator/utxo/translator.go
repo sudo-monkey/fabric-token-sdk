@@ -4,7 +4,7 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package translator
+package utxo
 
 import (
 	"crypto/sha256"
@@ -28,7 +28,7 @@ type Translator struct {
 	namespace       string
 }
 
-func New(txID string, rwSet RWSet, namespace string) *Translator {
+func NewTranslator(txID string, rwSet RWSet, namespace string) *Translator {
 	w := &Translator{
 		RWSet:           rwSet,
 		TxID:            txID,

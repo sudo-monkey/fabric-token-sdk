@@ -12,7 +12,7 @@ import (
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/services/flogging"
 	session2 "github.com/hyperledger-labs/fabric-smart-client/platform/view/services/session"
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/view"
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
 	"github.com/pkg/errors"
 )
 
@@ -120,7 +120,7 @@ func ReadPublicParameters(context view2.ServiceProvider, network, namespace stri
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get query executor for orion network [%s]", network)
 	}
-	w := translator.New("", &ReadOnlyRWSWrapper{qe: qe}, "")
+	w := utxo.NewTranslator("", &ReadOnlyRWSWrapper{qe: qe}, "")
 	ppRaw, err := w.ReadSetupParameters()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to retrieve public parameters")

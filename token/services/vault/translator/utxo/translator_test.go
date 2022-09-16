@@ -4,18 +4,19 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package translator_test
+package utxo_test
 
 import (
 	"strconv"
+
+	writer2 "github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
+	mock2 "github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo/mock"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/keys"
-	writer2 "github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator"
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/mock"
 )
 
 const (
@@ -24,27 +25,27 @@ const (
 
 var _ = Describe("Translator", func() {
 	var (
-		fakeRWSet *mock.RWSet
+		fakeRWSet *mock2.RWSet
 
 		writer *writer2.Translator
 
-		fakeissue    *mock.IssueAction
+		fakeissue    *mock2.IssueAction
 		sn           []string
-		faketransfer *mock.TransferAction
+		faketransfer *mock2.TransferAction
 	)
 
 	BeforeEach(func() {
-		fakeRWSet = &mock.RWSet{}
+		fakeRWSet = &mock2.RWSet{}
 
-		writer = writer2.New("0", fakeRWSet, "zkat")
+		writer = writer2.NewTranslator("0", fakeRWSet, "zkat")
 
 		fakeRWSet.GetStateReturns(nil, nil)
 		fakeRWSet.SetStateReturns(nil)
 
 		// fakeIssue
-		fakeissue = &mock.IssueAction{}
+		fakeissue = &mock2.IssueAction{}
 		// fakeTransfer
-		faketransfer = &mock.TransferAction{}
+		faketransfer = &mock2.TransferAction{}
 		// serial numbers
 		var err error
 		sn = make([]string, 3)

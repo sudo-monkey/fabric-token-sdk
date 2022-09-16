@@ -13,7 +13,7 @@ import (
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/view"
 	"github.com/hyperledger-labs/fabric-token-sdk/token"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/network/driver"
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
 	"github.com/pkg/errors"
 )
 
@@ -140,7 +140,7 @@ func (r *RequestApprovalResponderView) process(context view.Context, request *Ap
 		db: request.Namespace,
 		tx: tx,
 	}
-	t := translator.New(request.TxID, rws, "")
+	t := utxo.NewTranslator(request.TxID, rws, "")
 	for _, action := range actions {
 		err = t.Write(action)
 		if err != nil {

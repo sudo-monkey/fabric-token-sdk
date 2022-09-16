@@ -4,7 +4,7 @@ package mock
 import (
 	"sync"
 
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
 )
 
 type RWSet struct {
@@ -350,4 +350,4 @@ func (fake *RWSet) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ translator.RWSet = new(RWSet)
+var _ utxo.RWSet = new(RWSet)
