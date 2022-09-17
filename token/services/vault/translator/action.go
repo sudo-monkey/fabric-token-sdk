@@ -4,7 +4,7 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package utxo
+package translator
 
 type SetupAction interface {
 	GetSetupParameters() ([]byte, error)

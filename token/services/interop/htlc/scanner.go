@@ -13,13 +13,12 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
-
 	"github.com/hyperledger-labs/fabric-smart-client/platform/fabric"
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/view"
 	"github.com/hyperledger-labs/fabric-token-sdk/token"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/interop/encoding"
 	fabric2 "github.com/hyperledger-labs/fabric-token-sdk/token/services/network/fabric"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
 	"go.uber.org/zap/zapcore"
 )
 

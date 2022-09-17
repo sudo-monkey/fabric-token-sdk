@@ -4,7 +4,7 @@ package mock
 import (
 	"sync"
 
-	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator"
 )
 
 type IssueAction struct {
@@ -434,4 +434,4 @@ func (fake *IssueAction) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ utxo.IssueAction = new(IssueAction)
+var _ translator.IssueAction = new(IssueAction)

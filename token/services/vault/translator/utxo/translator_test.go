@@ -9,9 +9,9 @@ package utxo_test
 import (
 	"strconv"
 
-	writer2 "github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
-	mock2 "github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo/mock"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/mock"
 
+	writer2 "github.com/hyperledger-labs/fabric-token-sdk/token/services/vault/translator/utxo"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
@@ -25,17 +25,17 @@ const (
 
 var _ = Describe("Translator", func() {
 	var (
-		fakeRWSet *mock2.RWSet
+		fakeRWSet *mock.RWSet
 
 		writer *writer2.Translator
 
-		fakeissue    *mock2.IssueAction
+		fakeissue    *mock.IssueAction
 		sn           []string
-		faketransfer *mock2.TransferAction
+		faketransfer *mock.TransferAction
 	)
 
 	BeforeEach(func() {
-		fakeRWSet = &mock2.RWSet{}
+		fakeRWSet = &mock.RWSet{}
 
 		writer = writer2.NewTranslator("0", fakeRWSet, "zkat")
 
@@ -43,9 +43,9 @@ var _ = Describe("Translator", func() {
 		fakeRWSet.SetStateReturns(nil)
 
 		// fakeIssue
-		fakeissue = &mock2.IssueAction{}
+		fakeissue = &mock.IssueAction{}
 		// fakeTransfer
-		faketransfer = &mock2.TransferAction{}
+		faketransfer = &mock.TransferAction{}
 		// serial numbers
 		var err error
 		sn = make([]string, 3)

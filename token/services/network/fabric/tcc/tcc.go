@@ -55,6 +55,13 @@ type Validator interface {
 	UnmarshallAndVerify(ledger token.Ledger, binding string, raw []byte) ([]interface{}, error)
 }
 
+type Translator interface {
+	Write(s interface{}) error
+	CommitTokenRequest(raw []byte, b bool) error
+	ReadSetupParameters() ([]byte, error)
+	QueryTokens(ids []*token2.ID) ([][]byte, error)
+}
+
 //go:generate counterfeiter -o mock/public_parameters_manager.go -fake-name PublicParametersManager . PublicParametersManager
 
 type PublicParametersManager interface {
@@ -83,7 +90,7 @@ func (cc *TokenChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 		return shim.Error(fmt.Sprintf("failed to get public parameters: %s", err))
 	}
 
-	w := utxo.NewTranslator("", &rwsWrapper{stub: stub}, "")
+	w := cc.NewTranslator("", stub)
 	if err := w.Write(&SetupAction{SetupParameters: ppRaw}); err != nil {
 		return shim.Error(err.Error())
 	}
@@ -232,7 +239,7 @@ func (cc *TokenChaincode) ProcessRequest(raw []byte, stub shim.ChaincodeStubInte
 	// Write
 	cc.MetricsAgent.EmitKey(0, "tcc", "start", "TokenChaincodeProcessRequestWrite", stub.GetTxID())
 
-	w := utxo.NewTranslator(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
+	w := cc.NewTranslator(stub.GetTxID(), stub)
 	for _, action := range actions {
 		err = w.Write(action)
 		if err != nil {
@@ -249,7 +256,7 @@ func (cc *TokenChaincode) ProcessRequest(raw []byte, stub shim.ChaincodeStubInte
 }
 
 func (cc *TokenChaincode) QueryPublicParams(stub shim.ChaincodeStubInterface) pb.Response {
-	w := utxo.NewTranslator(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
+	w := cc.NewTranslator(stub.GetTxID(), stub)
 	raw, err := w.ReadSetupParameters()
 	if err != nil {
 		shim.Error("failed to retrieve public parameters: " + err.Error())
@@ -269,7 +276,7 @@ func (cc *TokenChaincode) QueryTokens(idsRaw []byte, stub shim.ChaincodeStubInte
 
 	logger.Debugf("query tokens [%v]...", ids)
 
-	w := utxo.NewTranslator(stub.GetTxID(), &rwsWrapper{stub: stub}, "")
+	w := cc.NewTranslator(stub.GetTxID(), stub)
 	res, err := w.QueryTokens(ids)
 	if err != nil {
 		logger.Errorf("failed query tokens [%v]: [%s]", ids, err)
@@ -305,4 +312,8 @@ func (cc *TokenChaincode) NewMetricsAgent(id string) (Agent, error) {
 		return nil, err
 	}
 	return cc.MetricsAgent, nil
+}
+
+func (cc *TokenChaincode) NewTranslator(txID string, stub shim.ChaincodeStubInterface) Translator {
+	return utxo.NewTranslator(txID, &rwsWrapper{stub: stub}, "")
 }
